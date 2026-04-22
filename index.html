@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ArgusLand CSW System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f1923">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CSW">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root {
+  --bg: #0f1923;
+  --surface: #162030;
+  --surface2: #1e2d3d;
+  --surface3: #243444;
+  --accent: #00d4aa;
+  --accent2: #ff6b6b;
+  --accent3: #ffd166;
+  --text: #e8edf2;
+  --muted: #5a7a8a;
+  --border: #1e3040;
+  --approved: #00d4aa;
+  --pending: #ffd166;
+  --rejected: #ff6b6b;
+  --draft: #7b8fa6;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+body::before {
+  content:'';
+  position:fixed;
+  top:0; left:0; right:0; height:300px;
+  background: radial-gradient(ellipse at 50% -20%, rgba(0,212,170,0.08) 0%, transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* HEADER */
+header {
+  position:relative; z-index:10;
+  padding: 12px 18px 10px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15,25,35,0.95);
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  display:flex; flex-direction:column;
+}
+
+.brand-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--accent);
+  line-height:1;
+}
+
+.brand-sub {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top:2px;
+}
+
+.header-badges {
+  display:flex; gap:6px;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.badge-total { background: rgba(0,212,170,0.1); color: var(--accent); border-color: rgba(0,212,170,0.2); }
+.badge-pending { background: rgba(255,209,102,0.1); color: var(--accent3); border-color: rgba(255,209,102,0.2); }
+
+/* NAV TABS */
+nav {
+  position:relative; z-index:10;
+  display:flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-tab {
+  flex:1;
+  padding: 10px 4px;
+  background:none;
+  border:none;
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor:pointer;
+  transition: all 0.2s;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-tab .icon { font-size: 16px; }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PAGES */
+.page {
+  display:none;
+  flex:1;
+  overflow-y:auto;
+  position:relative; z-index:10;
+  padding: 14px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.page.active { display:flex; flex-direction:column; gap:12px; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display:flex; align-items:center; gap:6px;
+}
+
+/* FORM ELEMENTS */
+label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  display:block;
+  margin-bottom: 5px;
+  margin-top: 12px;
+}
+
+label:first-of-type { margin-top:0; }
+
+input, select, textarea {
+  width:100%;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  outline:none;
+  transition: border-color 0.2s;
+  appearance:none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* BUTTONS */
+.btn {
+  width:100%;
+  padding: 13px;
+  border:none;
+  border-radius: 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor:pointer;
+  transition: all 0.15s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #0f1923; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: rgba(255,107,107,0.15); color: var(--accent2); border: 1px solid rgba(255,107,107,0.2); }
+.btn-warning { background: rgba(255,209,102,0.15); color: var(--accent3); border: 1px solid rgba(255,209,102,0.2); }
+
+.btn-sm {
+  width:auto;
+  padding: 7px 14px;
+  font-size: 11px;
+}
+
+/* PROMPT OUTPUT */
+.prompt-box {
+  background: var(--surface2);
+  border: 1px solid rgba(0,212,170,0.3);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y:auto;
+  display:none;
+}
+
+.prompt-box.visible { display:block; }
+
+/* SEARCH */
+.search-wrap {
+  position:relative;
+}
+
+.search-wrap input {
+  padding-left: 36px;
+}
+
+.search-icon {
+  position:absolute;
+  left:12px; top:50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size:14px;
+  pointer-events:none;
+}
+
+/* CSW LIST */
+.csw-list {
+  display:flex; flex-direction:column; gap:8px;
+}
+
+.csw-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  cursor:pointer;
+  transition: border-color 0.2s;
+}
+
+.csw-item:hover { border-color: var(--accent); }
+
+.csw-item-header {
+  display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
+  margin-bottom: 6px;
+}
+
+.csw-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.status-pill {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink:0;
+}
+
+.status-approved { background: rgba(0,212,170,0.15); color: var(--approved); }
+.status-pending { background: rgba(255,209,102,0.15); color: var(--pending); }
+.status-rejected { background: rgba(255,107,107,0.15); color: var(--rejected); }
+.status-draft { background: rgba(123,143,166,0.15); color: var(--draft); }
+
+.csw-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height:1.3;
+  margin-bottom: 6px;
+}
+
+.csw-meta {
+  font-size: 11px;
+  color: var(--muted);
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+
+/* DASHBOARD */
+.metrics-grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px;
+}
+
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  text-align:center;
+}
+
+.metric-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height:1;
+  margin-bottom: 4px;
+}
+
+.metric-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.metric-accent { color: var(--accent); }
+.metric-pending { color: var(--accent3); }
+.metric-rejected { color: var(--accent2); }
+.metric-draft { color: var(--draft); }
+
+/* BAR CHART */
+.bar-row {
+  display:flex; align-items:center; gap:10px; margin-bottom:8px;
+}
+
+.bar-label { font-size:12px; color:var(--muted); width:70px; flex-shrink:0; }
+.bar-track { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:4px; transition: width 0.8s ease; }
+.bar-val { font-size:12px; font-family:'Syne',sans-serif; font-weight:700; width:24px; text-align:right; }
+
+/* STALE ALERT */
+.stale-list { display:flex; flex-direction:column; gap:6px; }
+
+.stale-item {
+  background: rgba(255,209,102,0.08);
+  border: 1px solid rgba(255,209,102,0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+
+.stale-days {
+  font-family:'Syne',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  color: var(--accent3);
+}
+
+/* UPLOAD */
+.file-drop {
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 28px 16px;
+  text-align:center;
+  cursor:pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--surface2);
+}
+
+.file-drop:hover, .file-drop.dragover {
+  border-color: var(--accent);
+  background: rgba(0,212,170,0.05);
+}
+
+.file-drop-icon { font-size:32px; margin-bottom:8px; }
+.file-drop-text { font-size:13px; color:var(--muted); }
+.file-name { font-size:13px; color:var(--accent); margin-top:6px; font-weight:500; }
+
+/* MODAL */
+.modal-overlay {
+  display:none;
+  position:fixed; inset:0; z-index:200;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter:blur(4px);
+  padding:20px;
+  overflow-y:auto;
+}
+
+.modal-overlay.open { display:flex; align-items:flex-start; justify-content:center; padding-top:40px; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  width:100%;
+  max-width:500px;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform:translateY(20px); opacity:0; }
+  to { transform:translateY(0); opacity:1; }
+}
+
+.modal-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:16px;
+}
+
+.modal-title {
+  font-family:'Syne',sans-serif;
+  font-weight:700;
+  font-size:16px;
+  color:var(--accent);
+}
+
+.modal-close {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:8px;
+  padding:4px 10px;
+  cursor:pointer;
+  font-size:13px;
+}
+
+/* DUPLICATE WARNING */
+.dup-warning {
+  background: rgba(255,209,102,0.1);
+  border: 1px solid rgba(255,209,102,0.3);
+  border-radius:10px;
+  padding:12px;
+  font-size:13px;
+  color:var(--accent3);
+  display:none;
+  margin-top:8px;
+}
+
+.dup-warning.visible { display:block; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:20px; left:50%;
+  transform: translateX(-50%) translateY(60px);
+  background:var(--accent); color:#0f1923;
+  padding:10px 20px; border-radius:20px;
+  font-size:13px; font-weight:600;
+  z-index:300; transition:transform 0.3s ease;
+  white-space:nowrap; pointer-events:none;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* CONFIG */
+.config-row {
+  display:flex; gap:8px; align-items:center;
+}
+.config-row input { flex:1; }
+
+.divider {
+  height:1px; background:var(--border); margin:4px 0;
+}
+
+/* EMPTY STATE */
+.empty-state {
+  text-align:center; padding:40px 20px; color:var(--muted);
+}
+.empty-state .icon { font-size:36px; margin-bottom:10px; }
+.empty-state p { font-size:13px; line-height:1.6; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); padding:4px 0 2px;
+}
+
+.gap-sm { display:flex; flex-direction:column; gap:8px; }
+
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL: CSW DETAIL VIEW -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">CSW Detail</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="brand">
+    <div class="brand-name">ARGUSLAND CSW</div>
+    <div class="brand-sub">Completed Staff Work System</div>
+  </div>
+  <div class="header-badges">
+    <div class="badge badge-total">📋 <span id="hdrTotal">0</span></div>
+    <div class="badge badge-pending">⏳ <span id="hdrPending">0</span></div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-tab active" onclick="showPage('search')" id="tab-search">
+    <span class="icon">🔍</span>Search
+  </button>
+  <button class="nav-tab" onclick="showPage('new')" id="tab-new">
+    <span class="icon">✏️</span>New CSW
+  </button>
+  <button class="nav-tab" onclick="showPage('upload')" id="tab-upload">
+    <span class="icon">📤</span>Upload
+  </button>
+  <button class="nav-tab" onclick="showPage('dashboard')" id="tab-dashboard">
+    <span class="icon">📊</span>Dashboard
+  </button>
+  <button class="nav-tab" onclick="showPage('config')" id="tab-config">
+    <span class="icon">⚙️</span>Config
+  </button>
+</nav>
+
+<!-- ===================== SEARCH PAGE ===================== -->
+<div class="page active" id="page-search">
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search by title, type, site, department..."
+      oninput="renderSearch()" autocomplete="off">
+  </div>
+
+  <div style="display:flex; gap:6px;">
+    <select id="filterStatus" onchange="renderSearch()" style="flex:1;">
+      <option value="">All Status</option>
+      <option value="Draft">Draft</option>
+      <option value="Submitted">Submitted</option>
+      <option value="Approved">Approved</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <select id="filterType" onchange="renderSearch()" style="flex:1;">
+      <option value="">All Types</option>
+      <option value="Field Issue">Field Issue</option>
+      <option value="Policy/System">Policy/System</option>
+      <option value="Inter-Department">Inter-Department</option>
+    </select>
+  </div>
+
+  <div class="csw-list" id="searchResults">
+    <div class="empty-state">
+      <div class="icon">📋</div>
+      <p>No CSW records yet.<br>Create your first one in New CSW tab.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== NEW CSW PAGE ===================== -->
+<div class="page" id="page-new">
+
+  <div class="card">
+    <div class="card-title">📋 CSW Details</div>
+
+    <label>CSW Type *</label>
+    <select id="cswType" onchange="updateTypeHints()">
+      <option value="">Select type...</option>
+      <option value="Field Issue">Field Issue — One-time problem resolution</option>
+      <option value="Policy/System">Policy/System — New standing rule or procedure</option>
+      <option value="Inter-Department">Inter-Department — Action needed from another dept</option>
+    </select>
+
+    <label>Title / Subject *</label>
+    <input type="text" id="cswTitle" placeholder="Brief description of the issue or proposal"
+      oninput="checkDuplicate()">
+    <div class="dup-warning" id="dupWarning">
+      ⚠️ Similar CSW may already exist — check Search tab before proceeding.
+      <div id="dupMatches" style="margin-top:6px;font-size:12px;"></div>
+    </div>
+
+    <label>Site / Location *</label>
+    <select id="cswSite">
+      <option value="">Select site...</option>
+      <option value="MNT Phase 1">MNT Phase 1</option>
+      <option value="MNT Phase 2">MNT Phase 2</option>
+      <option value="MNT Phase 3">MNT Phase 3</option>
+      <option value="MNT Phase 4">MNT Phase 4</option>
+      <option value="MH SH">MH SH (Menzi Heights Standard)</option>
+      <option value="MH EH">MH EH (Menzi Heights Economic)</option>
+      <option value="BCC">BCC</option>
+      <option value="General / All Sites">General / All Sites</option>
+      <option value="Office">Office / Admin</option>
+    </select>
+
+    <label>Department Involved *</label>
+    <select id="cswDept">
+      <option value="">Select department...</option>
+      <option value="Planning & Engineering">Planning & Engineering</option>
+      <option value="Construction">Construction</option>
+      <option value="QA/QC">QA/QC</option>
+      <option value="Finance">Finance</option>
+      <option value="Admin">Admin</option>
+      <option value="Sales">Sales</option>
+      <option value="Legal">Legal</option>
+      <option value="Cross-Department">Cross-Department</option>
+    </select>
+
+    <label>Prepared By *</label>
+    <input type="text" id="cswPreparedBy" placeholder="Your name / position">
+
+    <label>Situation / Problem *</label>
+    <textarea id="cswSituation" placeholder="Describe what happened, what was observed, what is the current state. Write in any language."></textarea>
+
+    <label>Impact / Why It Matters</label>
+    <textarea id="cswImpact" placeholder="What happens if this is not resolved? Who is affected?" style="min-height:60px;"></textarea>
+
+    <label>Proposed Action / Recommendation</label>
+    <textarea id="cswRecommendation" placeholder="What do you recommend? What should be done?" style="min-height:60px;"></textarea>
+
+    <label>Supporting References (optional)</label>
+    <input type="text" id="cswReferences" placeholder="Drawing no., plan ref, prior CSW number...">
+
+  </div>
+
+  <button class="btn btn-primary" onclick="generatePrompt()">
+    ✨ Generate AI Prompt
+  </button>
+
+  <div id="promptSection" style="display:none; flex-direction:column; gap:8px;">
+    <div class="section-label">📎 Copy this prompt → paste into Claude / any AI</div>
+    <div class="prompt-box visible" id="promptOutput"></div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-primary" onclick="copyPrompt()" style="flex:1;">📋 Copy Prompt</button>
+      <button class="btn btn-secondary btn-sm" onclick="saveDraft()" style="flex:1;">💾 Save Draft</button>
+    </div>
+    <div class="section-label" style="color:var(--accent3);">⚠️ After AI generates your CSW draft — get it signed, then upload the signed PDF in the Upload tab.</div>
+  </div>
+
+</div>
+
+<!-- ===================== UPLOAD PAGE ===================== -->
+<div class="page" id="page-upload">
+
+  <div class="card">
+    <div class="card-title">📤 Upload Approved CSW</div>
+
+    <label>CSW Number *</label>
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="uploadCswNo" placeholder="e.g. CSW-2026-001" style="flex:1;">
+      <button class="btn btn-secondary btn-sm" onclick="autoNumber()" style="width:auto;padding:10px 14px;">Auto</button>
+    </div>
+
+    <label>CSW Title *</label>
+    <input type="text" id="uploadTitle" placeholder="Title of the approved CSW">
+
+    <label>Type *</label>
+    <select id="uploadType">
+      <option value="">Select...</option>
+      <option value="Field Issue">Field Issue</option>
+      <option value="Policy/System">Policy/System</option>
+      <option value="Inter-Department">Inter-Department</option>
+    </select>
+
+    <label>Site *</label>
+    <select id="uploadSite">
+      <option value="">Select site...</option>
+      <option value="MNT Phase 1">MNT Phase 1</option>
+      <option value="MNT Phase 2">MNT Phase 2</option>
+      <option value="MNT Phase 3">MNT Phase 3</option>
+      <option value="MNT Phase 4">MNT Phase 4</option>
+      <option value="MH SH">MH SH</option>
+      <option value="MH EH">MH EH</option>
+      <option value="BCC">BCC</option>
+      <option value="General / All Sites">General / All Sites</option>
+      <option value="Office">Office / Admin</option>
+    </select>
+
+    <label>Department</label>
+    <select id="uploadDept">
+      <option value="">Select...</option>
+      <option value="Planning & Engineering">Planning & Engineering</option>
+      <option value="Construction">Construction</option>
+      <option value="QA/QC">QA/QC</option>
+      <option value="Finance">Finance</option>
+      <option value="Admin">Admin</option>
+      <option value="Sales">Sales</option>
+      <option value="Legal">Legal</option>
+      <option value="Cross-Department">Cross-Department</option>
+    </select>
+
+    <label>Date Approved *</label>
+    <input type="date" id="uploadDate">
+
+    <label>Status *</label>
+    <select id="uploadStatus">
+      <option value="Approved">Approved</option>
+      <option value="Submitted">Submitted — Awaiting Approval</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+
+    <label>Uploaded By</label>
+    <input type="text" id="uploadedBy" placeholder="Your name">
+
+    <label>Attach PDF or JPEG *</label>
+    <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+      <div class="file-drop-icon">📄</div>
+      <div class="file-drop-text">Tap to select PDF or JPEG</div>
+      <div class="file-name" id="fileName"></div>
+    </div>
+    <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg" style="display:none" onchange="handleFile(event)">
+
+  </div>
+
+  <button class="btn btn-primary" onclick="uploadToGitHub()">
+    📤 Upload to ArgusLand Archive
+  </button>
+
+  <div class="section-label" style="text-align:center; padding:4px;">
+    Files are permanently stored in the ArgusLand GitHub repository.
+  </div>
+
+</div>
+
+<!-- ===================== DASHBOARD PAGE ===================== -->
+<div class="page" id="page-dashboard">
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-value metric-accent" id="dashTotal">0</div>
+      <div class="metric-label">Total CSW</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value metric-pending" id="dashPending">0</div>
+      <div class="metric-label">Pending</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value metric-accent" id="dashApproved">0</div>
+      <div class="metric-label">Approved</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="dashRate" style="color:var(--accent); font-size:24px;">—</div>
+      <div class="metric-label">Approval Rate</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 Avg. Approval Duration</div>
+    <div style="text-align:center; padding:8px 0;">
+      <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:36px; color:var(--accent);" id="dashAvgDays">—</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:4px;">days from submission to approval</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 By Type</div>
+    <div id="typeChart"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏗️ By Site</div>
+    <div id="siteChart"></div>
+  </div>
+
+  <div class="card" id="staleCard">
+    <div class="card-title">⚠️ Stale — No Update for 7+ Days</div>
+    <div class="stale-list" id="staleList">
+      <div class="empty-state" style="padding:16px;">
+        <p>No stale CSWs. All tracked items are moving.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏆 Approved This Month</div>
+    <div id="thisMonth" style="font-size:13px; color:var(--muted); padding:4px 0;">Loading...</div>
+  </div>
+
+</div>
+
+<!-- ===================== CONFIG PAGE ===================== -->
+<div class="page" id="page-config">
+
+  <div class="card">
+    <div class="card-title">⚙️ GitHub Configuration</div>
+
+    <label>GitHub Username *</label>
+    <input type="text" id="cfgUser" placeholder="e.g. arguslandengineering-cell">
+
+    <label>Repository Name *</label>
+    <input type="text" id="cfgRepo" placeholder="e.g. csw-archive">
+
+    <label>Personal Access Token *</label>
+    <div class="config-row">
+      <input type="password" id="cfgToken" placeholder="ghp_xxxxxxxxxxxx">
+      <button class="btn btn-secondary btn-sm" onclick="toggleToken()">👁</button>
+    </div>
+    <div style="font-size:11px; color:var(--muted); margin-top:4px;">
+      GitHub → Settings → Developer Settings → Personal Access Tokens → Generate (needs repo scope)
+    </div>
+
+    <label>Notification Email</label>
+    <input type="email" id="cfgEmail" value="arguslandengineering@gmail.com">
+
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👤 My Profile</div>
+    <label>Default Name (auto-fills Prepared By)</label>
+    <input type="text" id="cfgName" placeholder="Your name / position">
+    <div style="margin-top:12px;">
+      <button class="btn btn-secondary" onclick="saveProfile()">💾 Save Profile</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Signatories</div>
+    <label>Reviewed By (Engineers)</label>
+    <input type="text" id="cfgReviewed" placeholder="e.g. Engr. ___">
+    <label>Noted By (Technical Head)</label>
+    <input type="text" id="cfgNoted" placeholder="e.g. Charles">
+    <label>Approved By (President)</label>
+    <input type="text" id="cfgApproved" placeholder="e.g. President ___">
+    <div style="margin-top:12px;">
+      <button class="btn btn-secondary" onclick="saveSignatories()">💾 Save Signatories</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗄️ Local Data</div>
+    <div style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+      CSW index is cached locally for offline search. Sync pulls latest from GitHub.
+    </div>
+    <div class="gap-sm">
+      <button class="btn btn-secondary" onclick="syncFromGitHub()">🔄 Sync from GitHub</button>
+      <button class="btn btn-danger" onclick="clearLocal()">🗑 Clear Local Cache</button>
+    </div>
+  </div>
+
+  <div style="text-align:center; font-size:11px; color:var(--muted); padding:8px;">
+    ArgusLand CSW System v1.0 · Planning & Engineering Dept
+  </div>
+
+</div>
+
+<script>
+// =============================================
+// STATE & STORAGE
+// =============================================
+
+let cswIndex = JSON.parse(localStorage.getItem('csw_index') || '[]');
+let config = JSON.parse(localStorage.getItem('csw_config') || '{}');
+let profile = JSON.parse(localStorage.getItem('csw_profile') || '{}');
+let signatories = JSON.parse(localStorage.getItem('csw_signatories') || '{}');
+
+let selectedFile = null;
+let currentPrompt = '';
+
+// =============================================
+// NAVIGATION
+// =============================================
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'search') renderSearch();
+}
+
+// =============================================
+// SEARCH
+// =============================================
+
+function renderSearch() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const statusF = document.getElementById('filterStatus').value;
+  const typeF = document.getElementById('filterType').value;
+
+  let results = cswIndex.filter(c => {
+    const matchQ = !q ||
+      (c.title || '').toLowerCase().includes(q) ||
+      (c.type || '').toLowerCase().includes(q) ||
+      (c.site || '').toLowerCase().includes(q) ||
+      (c.dept || '').toLowerCase().includes(q) ||
+      (c.number || '').toLowerCase().includes(q);
+    const matchS = !statusF || c.status === statusF;
+    const matchT = !typeF || c.type === typeF;
+    return matchQ && matchS && matchT;
+  });
+
+  const container = document.getElementById('searchResults');
+
+  if (results.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No results found.<br>Try different keywords.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = results.map(c => `
+    <div class="csw-item" onclick="viewCSW('${c.id}')">
+      <div class="csw-item-header">
+        <div class="csw-number">${c.number || 'DRAFT'}</div>
+        <div class="status-pill status-${(c.status||'draft').toLowerCase()}">${c.status || 'Draft'}</div>
+      </div>
+      <div class="csw-title">${c.title}</div>
+      <div class="csw-meta">
+        <span>${c.type || '—'}</span>
+        <span>${c.site || '—'}</span>
+        <span>${c.dept || '—'}</span>
+        <span>${c.dateCreated ? formatDate(c.dateCreated) : '—'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function viewCSW(id) {
+  const c = cswIndex.find(x => x.id === id);
+  if (!c) return;
+
+  document.getElementById('modalTitle').innerText = c.number || 'CSW Draft';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="gap-sm">
+      <div><div class="section-label">Title</div><div style="font-size:15px;font-weight:500;">${c.title}</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="status-pill status-${(c.status||'draft').toLowerCase()}">${c.status || 'Draft'}</div>
+        <div class="badge badge-total">${c.type || '—'}</div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">
+        <div><div class="section-label">Site</div>${c.site || '—'}</div>
+        <div><div class="section-label">Department</div>${c.dept || '—'}</div>
+        <div><div class="section-label">Prepared By</div>${c.preparedBy || '—'}</div>
+        <div><div class="section-label">Date</div>${c.dateCreated ? formatDate(c.dateCreated) : '—'}</div>
+      </div>
+      ${c.situation ? `<div><div class="section-label">Situation</div><div style="font-size:13px;color:var(--muted);line-height:1.6;">${c.situation}</div></div>` : ''}
+      ${c.fileUrl ? `<a href="${c.fileUrl}" target="_blank" style="display:block;margin-top:8px;"><button class="btn btn-primary">📄 Open / Reprint Signed CSW</button></a>` : ''}
+      ${c.approvalDate ? `<div><div class="section-label">Approved On</div>${formatDate(c.approvalDate)}</div>` : ''}
+    </div>
+  `;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('open');
+}
+
+// =============================================
+// DUPLICATE CHECK
+// =============================================
+
+function checkDuplicate() {
+  const title = document.getElementById('cswTitle').value.toLowerCase();
+  if (title.length < 5) {
+    document.getElementById('dupWarning').classList.remove('visible');
+    return;
+  }
+
+  const words = title.split(' ').filter(w => w.length > 3);
+  const matches = cswIndex.filter(c => {
+    const ct = (c.title || '').toLowerCase();
+    return words.some(w => ct.includes(w));
+  }).slice(0, 3);
+
+  if (matches.length > 0) {
+    document.getElementById('dupMatches').innerHTML =
+      matches.map(m => `→ ${m.number || 'Draft'}: ${m.title} (${m.status || 'Draft'})`).join('<br>');
+    document.getElementById('dupWarning').classList.add('visible');
+  } else {
+    document.getElementById('dupWarning').classList.remove('visible');
+  }
+}
+
+// =============================================
+// PROMPT GENERATOR
+// =============================================
+
+function generatePrompt() {
+  const type = document.getElementById('cswType').value;
+  const title = document.getElementById('cswTitle').value.trim();
+  const site = document.getElementById('cswSite').value;
+  const dept = document.getElementById('cswDept').value;
+  const preparedBy = document.getElementById('cswPreparedBy').value.trim();
+  const situation = document.getElementById('cswSituation').value.trim();
+  const impact = document.getElementById('cswImpact').value.trim();
+  const recommendation = document.getElementById('cswRecommendation').value.trim();
+  const references = document.getElementById('cswReferences').value.trim();
+
+  if (!type || !title || !situation) {
+    showToast('⚠️ Fill in Type, Title, and Situation first');
+    return;
+  }
+
+  const sig = signatories;
+  const reviewedBy = sig.reviewed || '[Reviewing Engineer]';
+  const notedBy = sig.noted || '[Technical Head]';
+  const approvedBy = sig.approved || '[President]';
+
+  const cswNo = generateDraftNumber();
+
+  const prompt = `You are a professional technical writer for ArgusLand, Inc., a residential subdivision developer in Damilag, Manolo Fortich, Bukidnon, Philippines.
+
+Produce a complete, formal Completed Staff Work (CSW) document based on the information below. The output must be formal, concise, and print-ready.
+
+---
+CSW REFERENCE: ${cswNo} (Draft)
+DATE: ${new Date().toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'})}
+TYPE: ${type}
+TITLE: ${title}
+SITE/LOCATION: ${site || 'Not specified'}
+DEPARTMENT: ${dept || 'Planning & Engineering'}
+PREPARED BY: ${preparedBy || '[Staff Name / Position]'}
+REVIEWED BY: ${reviewedBy}
+NOTED BY: ${notedBy}
+APPROVED BY: ${approvedBy}
+---
+
+SITUATION / BACKGROUND:
+${situation}
+
+${impact ? `IMPACT / SIGNIFICANCE:\n${impact}\n` : ''}
+${recommendation ? `PROPOSED ACTION / RECOMMENDATION:\n${recommendation}\n` : ''}
+${references ? `REFERENCES:\n${references}\n` : ''}
+---
+
+INSTRUCTIONS FOR OUTPUT:
+1. Write a complete CSW with these sections: I. Background/Situation, II. Discussion/Analysis, III. Recommendation, IV. Action Required
+2. For Policy/System type — frame the recommendation as a standing policy applicable to all future occurrences of this situation
+3. For Inter-Department type — clearly state which department must act and what the deadline/expectation is
+4. For Field Issue type — be specific about the corrective action and who is responsible
+5. Keep language formal, direct, and unambiguous
+6. End with a signature block using the signatories listed above
+7. Output plain text, no markdown symbols`;
+
+  currentPrompt = prompt;
+  document.getElementById('promptOutput').innerText = prompt;
+  document.getElementById('promptSection').style.display = 'flex';
+  document.getElementById('promptSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(currentPrompt).then(() => {
+    showToast('📋 Prompt copied! Paste into Claude or any AI.');
+  }).catch(() => {
+    showToast('⚠️ Copy failed — select text manually');
+  });
+}
+
+function saveDraft() {
+  const title = document.getElementById('cswTitle').value.trim();
+  if (!title) { showToast('Add a title first'); return; }
+
+  const draft = {
+    id: 'draft_' + Date.now(),
+    number: generateDraftNumber(),
+    title,
+    type: document.getElementById('cswType').value,
+    site: document.getElementById('cswSite').value,
+    dept: document.getElementById('cswDept').value,
+    preparedBy: document.getElementById('cswPreparedBy').value,
+    situation: document.getElementById('cswSituation').value,
+    status: 'Draft',
+    dateCreated: new Date().toISOString(),
+    fileUrl: null
+  };
+
+  cswIndex.unshift(draft);
+  localStorage.setItem('csw_index', JSON.stringify(cswIndex));
+  updateHeaderBadges();
+  showToast('💾 Draft saved to directory');
+
+  // Notify if email configured
+  notifyEmail('new_draft', draft);
+}
+
+function generateDraftNumber() {
+  const year = new Date().getFullYear();
+  const existing = cswIndex.filter(c => (c.number || '').includes(String(year)));
+  const next = String(existing.length + 1).padStart(3, '0');
+  return `CSW-${year}-${next}`;
+}
+
+function updateTypeHints() {
+  // Future: show contextual hints per type
+}
+
+// =============================================
+// UPLOAD TO GITHUB
+// =============================================
+
+function autoNumber() {
+  document.getElementById('uploadCswNo').value = generateDraftNumber();
+}
+
+function handleFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const valid = file.type === 'application/pdf' || file.type === 'image/jpeg' || file.type === 'image/jpg';
+  if (!valid) { showToast('⚠️ Only PDF or JPEG allowed'); return; }
+  selectedFile = file;
+  document.getElementById('fileName').innerText = '✅ ' + file.name;
+}
+
+// Drag and drop
+const fileDrop = document.getElementById('fileDrop');
+fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+fileDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  fileDrop.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) { selectedFile = file; document.getElementById('fileName').innerText = '✅ ' + file.name; }
+});
+
+async function uploadToGitHub() {
+  const cswNo = document.getElementById('uploadCswNo').value.trim();
+  const title = document.getElementById('uploadTitle').value.trim();
+  const type = document.getElementById('uploadType').value;
+  const site = document.getElementById('uploadSite').value;
+  const dept = document.getElementById('uploadDept').value;
+  const dateApproved = document.getElementById('uploadDate').value;
+  const status = document.getElementById('uploadStatus').value;
+  const uploadedBy = document.getElementById('uploadedBy').value.trim();
+
+  if (!cswNo || !title || !selectedFile || !dateApproved) {
+    showToast('⚠️ Fill all required fields and attach file');
+    return;
+  }
+
+  const cfg = config;
+  if (!cfg.token || !cfg.user || !cfg.repo) {
+    showToast('⚠️ Configure GitHub settings in Config tab first');
+    showPage('config');
+    return;
+  }
+
+  showToast('⏳ Uploading...');
+
+  try {
+    // Read file as base64
+    const base64 = await fileToBase64(selectedFile);
+    const ext = selectedFile.name.split('.').pop();
+    const safeName = cswNo.replace(/[^a-zA-Z0-9-_]/g, '_') + '_' + Date.now() + '.' + ext;
+    const path = `csw-files/${safeName}`;
+
+    // Upload file to GitHub
+    const res = await fetch(`https://api.github.com/repos/${cfg.user}/${cfg.repo}/contents/${path}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${cfg.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Upload CSW: ${cswNo} - ${title}`,
+        content: base64,
+        committer: { name: uploadedBy || 'ArgusLand Staff', email: cfg.email || 'arguslandengineering@gmail.com' }
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Upload failed');
+    }
+
+    const data = await res.json();
+    const fileUrl = data.content.html_url;
+
+    // Save to index
+    const entry = {
+      id: 'csw_' + Date.now(),
+      number: cswNo,
+      title,
+      type,
+      site,
+      dept,
+      status,
+      dateCreated: new Date().toISOString(),
+      approvalDate: dateApproved,
+      uploadedBy,
+      fileUrl,
+      filePath: path
+    };
+
+    // Check if updating existing
+    const existIdx = cswIndex.findIndex(c => c.number === cswNo);
+    if (existIdx >= 0) {
+      cswIndex[existIdx] = { ...cswIndex[existIdx], ...entry };
+    } else {
+      cswIndex.unshift(entry);
+    }
+
+    localStorage.setItem('csw_index', JSON.stringify(cswIndex));
+
+    // Also update index.json on GitHub
+    await pushIndexToGitHub();
+
+    updateHeaderBadges();
+    showToast('✅ Uploaded! CSW archived successfully.');
+    notifyEmail('upload', entry);
+
+    // Reset form
+    selectedFile = null;
+    document.getElementById('fileName').innerText = '';
+    document.getElementById('uploadCswNo').value = '';
+    document.getElementById('uploadTitle').value = '';
+
+  } catch (e) {
+    showToast('❌ Upload failed: ' + e.message);
+    console.error(e);
+  }
+}
+
+async function pushIndexToGitHub() {
+  const cfg = config;
+  if (!cfg.token) return;
+
+  const path = 'csw-index.json';
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(cswIndex, null, 2))));
+
+  // Check if file exists first
+  try {
+    const check = await fetch(`https://api.github.com/repos/${cfg.user}/${cfg.repo}/contents/${path}`, {
+      headers: { 'Authorization': `token ${cfg.token}` }
+    });
+    const existing = check.ok ? await check.json() : null;
+
+    await fetch(`https://api.github.com/repos/${cfg.user}/${cfg.repo}/contents/${path}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${cfg.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'Update CSW index',
+        content,
+        sha: existing?.sha || undefined,
+        committer: { name: 'ArgusLand CSW System', email: 'arguslandengineering@gmail.com' }
+      })
+    });
+  } catch (e) {
+    console.warn('Index push failed (non-critical):', e);
+  }
+}
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// =============================================
+// SYNC FROM GITHUB
+// =============================================
+
+async function syncFromGitHub() {
+  const cfg = config;
+  if (!cfg.user || !cfg.repo) { showToast('⚠️ Set GitHub config first'); return; }
+
+  showToast('🔄 Syncing...');
+  try {
+    const url = `https://raw.githubusercontent.com/${cfg.user}/${cfg.repo}/main/csw-index.json?t=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Index not found');
+    const data = await res.json();
+    cswIndex = data;
+    localStorage.setItem('csw_index', JSON.stringify(cswIndex));
+    updateHeaderBadges();
+    showToast('✅ Synced! ' + cswIndex.length + ' CSW records loaded.');
+  } catch (e) {
+    showToast('⚠️ Sync failed — check config or internet');
+  }
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+
+function renderDashboard() {
+  const total = cswIndex.length;
+  const approved = cswIndex.filter(c => c.status === 'Approved').length;
+  const pending = cswIndex.filter(c => c.status === 'Submitted' || c.status === 'Draft').length;
+  const rejected = cswIndex.filter(c => c.status === 'Rejected').length;
+  const rate = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+  document.getElementById('dashTotal').innerText = total;
+  document.getElementById('dashPending').innerText = pending;
+  document.getElementById('dashApproved').innerText = approved;
+  document.getElementById('dashRate').innerText = total > 0 ? rate + '%' : '—';
+
+  // Avg approval duration
+  const durations = cswIndex
+    .filter(c => c.status === 'Approved' && c.dateCreated && c.approvalDate)
+    .map(c => {
+      const d1 = new Date(c.dateCreated);
+      const d2 = new Date(c.approvalDate);
+      return Math.max(0, Math.round((d2 - d1) / 86400000));
+    });
+  const avg = durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
+  document.getElementById('dashAvgDays').innerText = avg !== null ? avg + ' days' : '—';
+
+  // Type chart
+  renderBarChart('typeChart', countBy('type'), '#00d4aa');
+
+  // Site chart
+  renderBarChart('siteChart', countBy('site'), '#ffd166');
+
+  // Stale (no approvalDate and >7 days old)
+  const now = Date.now();
+  const stale = cswIndex.filter(c => {
+    if (c.status === 'Approved' || c.status === 'Rejected') return false;
+    const age = (now - new Date(c.dateCreated).getTime()) / 86400000;
+    return age > 7;
+  });
+
+  const staleList = document.getElementById('staleList');
+  if (stale.length === 0) {
+    staleList.innerHTML = `<div class="empty-state" style="padding:16px;"><p>No stale CSWs. All moving.</p></div>`;
+  } else {
+    staleList.innerHTML = stale.map(c => {
+      const age = Math.round((now - new Date(c.dateCreated).getTime()) / 86400000);
+      return `<div class="stale-item">
+        <div>
+          <div style="font-size:13px;font-weight:500;">${c.title}</div>
+          <div style="font-size:11px;color:var(--muted);">${c.number || 'Draft'} · ${c.site || '—'}</div>
+        </div>
+        <div class="stale-days">${age}d</div>
+      </div>`;
+    }).join('');
+  }
+
+  // This month
+  const thisMonth = new Date().getMonth();
+  const thisYear = new Date().getFullYear();
+  const monthApproved = cswIndex.filter(c => {
+    if (c.status !== 'Approved' || !c.approvalDate) return false;
+    const d = new Date(c.approvalDate);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  });
+  document.getElementById('thisMonth').innerHTML = monthApproved.length === 0
+    ? '<span style="color:var(--muted)">No approvals this month yet.</span>'
+    : monthApproved.map(c => `<div style="padding:4px 0; border-bottom:1px solid var(--border);">✅ ${c.number} — ${c.title}</div>`).join('');
+}
+
+function countBy(field) {
+  const counts = {};
+  cswIndex.forEach(c => {
+    const val = c[field] || 'Unknown';
+    counts[val] = (counts[val] || 0) + 1;
+  });
+  return counts;
+}
+
+function renderBarChart(containerId, counts, color) {
+  const container = document.getElementById(containerId);
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const max = entries.length > 0 ? Math.max(...entries.map(e => e[1])) : 1;
+
+  if (entries.length === 0) {
+    container.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No data yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = entries.map(([label, val]) => `
+    <div class="bar-row">
+      <div class="bar-label" title="${label}">${label.length > 10 ? label.slice(0,10)+'…' : label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round((val/max)*100)}%; background:${color};"></div>
+      </div>
+      <div class="bar-val" style="color:${color};">${val}</div>
+    </div>
+  `).join('');
+}
+
+// =============================================
+// CONFIG
+// =============================================
+
+function loadConfig() {
+  if (config.user) document.getElementById('cfgUser').value = config.user;
+  if (config.repo) document.getElementById('cfgRepo').value = config.repo;
+  if (config.token) document.getElementById('cfgToken').value = config.token;
+  if (config.email) document.getElementById('cfgEmail').value = config.email;
+  if (profile.name) document.getElementById('cfgName').value = profile.name;
+  if (signatories.reviewed) document.getElementById('cfgReviewed').value = signatories.reviewed;
+  if (signatories.noted) document.getElementById('cfgNoted').value = signatories.noted;
+  if (signatories.approved) document.getElementById('cfgApproved').value = signatories.approved;
+
+  // Auto-fill prepared by
+  if (profile.name) document.getElementById('cswPreparedBy').value = profile.name;
+  if (profile.name) document.getElementById('uploadedBy').value = profile.name;
+}
+
+function saveConfig() {
+  config = {
+    user: document.getElementById('cfgUser').value.trim(),
+    repo: document.getElementById('cfgRepo').value.trim(),
+    token: document.getElementById('cfgToken').value.trim(),
+    email: document.getElementById('cfgEmail').value.trim()
+  };
+  localStorage.setItem('csw_config', JSON.stringify(config));
+  showToast('✅ Config saved');
+}
+
+function saveProfile() {
+  profile = { name: document.getElementById('cfgName').value.trim() };
+  localStorage.setItem('csw_profile', JSON.stringify(profile));
+  if (profile.name) {
+    document.getElementById('cswPreparedBy').value = profile.name;
+    document.getElementById('uploadedBy').value = profile.name;
+  }
+  showToast('✅ Profile saved');
+}
+
+function saveSignatories() {
+  signatories = {
+    reviewed: document.getElementById('cfgReviewed').value.trim(),
+    noted: document.getElementById('cfgNoted').value.trim(),
+    approved: document.getElementById('cfgApproved').value.trim()
+  };
+  localStorage.setItem('csw_signatories', JSON.stringify(signatories));
+  showToast('✅ Signatories saved');
+}
+
+function toggleToken() {
+  const f = document.getElementById('cfgToken');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function clearLocal() {
+  if (!confirm('Clear all local CSW data? This does not delete GitHub files.')) return;
+  cswIndex = [];
+  localStorage.removeItem('csw_index');
+  updateHeaderBadges();
+  showToast('🗑 Local cache cleared');
+}
+
+// =============================================
+// NOTIFICATIONS (Email via mailto fallback)
+// =============================================
+
+function notifyEmail(type, data) {
+  // Email notification is handled by GitHub Actions on commit.
+  // This function is a local log only.
+  console.log('Event:', type, data);
+}
+
+// =============================================
+// HEADER BADGES
+// =============================================
+
+function updateHeaderBadges() {
+  document.getElementById('hdrTotal').innerText = cswIndex.length;
+  const pending = cswIndex.filter(c => c.status === 'Submitted' || c.status === 'Draft').length;
+  document.getElementById('hdrPending').innerText = pending;
+}
+
+// =============================================
+// UTILITIES
+// =============================================
+
+function formatDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch { return iso; }
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Close modal on overlay click
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// =============================================
+// SERVICE WORKER
+// =============================================
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(r => console.log('SW registered'))
+      .catch(e => console.log('SW error', e));
+  });
+}
+
+// =============================================
+// INIT
+// =============================================
+
+loadConfig();
+updateHeaderBadges();
+renderSearch();
+</script>
+</body>
+</html>
