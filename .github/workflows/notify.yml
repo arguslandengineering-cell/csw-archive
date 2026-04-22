@@ -1,0 +1,53 @@
+name: CSW Upload Notification
+
+on:
+  push:
+    paths:
+      - 'csw-files/**'
+      - 'csw-index.json'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Get changed files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only HEAD~1 HEAD | grep -E 'csw-files/' | head -5)
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          COUNT=$(echo "$FILES" | grep -c . || echo "0")
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Send email notification
+        if: steps.changed.outputs.count != '0'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "📋 ArgusLand CSW — New Upload by ${{ github.actor }}"
+          to: arguslandengineering@gmail.com
+          from: ArgusLand CSW System <arguslandengineering@gmail.com>
+          body: |
+            A new CSW file has been uploaded to the ArgusLand archive.
+
+            Uploaded by: ${{ github.actor }}
+            Time: ${{ github.event.head_commit.timestamp }}
+            Commit: ${{ github.event.head_commit.message }}
+
+            Files uploaded:
+            ${{ steps.changed.outputs.files }}
+
+            View repository:
+            https://github.com/${{ github.repository }}
+
+            ---
+            ArgusLand Planning & Engineering Department
+            CSW Automated Monitoring System
